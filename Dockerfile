@@ -33,20 +33,26 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
+# 依存解決レイヤ
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile --gemfile
 
-# Copy application code
-COPY . .
+# 1) bundler のバージョン/lock の整合性を可視化
+RUN ruby -v && bundler -v && \
+    awk '/^BUNDLED WITH$/{flag=1;next}/^[A-Z ]+$/{flag=0}flag' Gemfile.lock
 
-# Precompile bootsnap code for faster boot times
-RUN bundle exec bootsnap precompile app/ lib/
+# 2) bundler 設定（本番想定）
+#    ※ Nixpacks でなく Dockerfile なので、ここで明示的に設定すると安定
+ENV BUNDLE_WITHOUT="development:test" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_FROZEN="1"
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# 3) bundle install を単独で実行（ここで落ちるかを確認）
+RUN bundle install --jobs 4 --retry 3
+
+# 4) bootsnap を分離（bundle が通ったあとに実行）
+RUN rm -rf ~/.bundle/ "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
+RUN bundle exec bootsnap precompile --gemfile
 
 
 
