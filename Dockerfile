@@ -39,6 +39,41 @@ RUN gem install bundler -v "$(awk '/^BUNDLED WITH$/{getline; gsub(/^ +/,""); pri
 # 依存解決（詳細ログで失敗gemを可視化したい場合は --verbose を付ける）
 RUN bundle install --jobs 4 --retry 3
 
+# --- base (runtime) は凍結のままでOK ---
+ENV RAILS_ENV="production" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_FROZEN="1"
+
+# --- build stage ---
+FROM base AS build
+
+# ここはそのまま（OSパッケージ追加はあなたの内容でOK）
+
+# ← この直後に「凍結OFF」を上書き（重要）
+ENV BUNDLE_DEPLOYMENT="" \
+    BUNDLE_FROZEN="" \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_FORCE_RUBY_PLATFORM="1"
+
+# 依存レイヤ
+COPY Gemfile Gemfile.lock ./
+
+# Bundler を lock に合わせてピン止め
+RUN gem install bundler -v "$(awk '/^BUNDLED WITH$/{getline; gsub(/^ +/,""); print}' Gemfile.lock)"
+
+# （デバッグ兼ねて）本当に一致を見る
+RUN ruby -v && bundler -v && \
+    echo "BUNDLED WITH:" && awk '/^BUNDLED WITH$/{getline; gsub(/^ +/,""); print}' Gemfile.lock && \
+    echo "Check gem keyword (pagyなど):" && (grep -n "pagy\|kaminari\|page" Gemfile Gemfile.lock || true)
+
+# ★ 凍結OFFで install（もしくは --no-deployment を付ける）
+RUN bundle install --jobs 4 --retry 3
+# 代替: RUN bundle install --no-deployment --jobs 4 --retry 3
+
+
+
 # アプリ本体をコピー
 COPY . .
 
