@@ -25,7 +25,3 @@ test:
 # is mounted as a persistent Docker volume in config/deploy.yml.
 production:
   adapter: postgresql
-  encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  # Railwayが提供するDATABASE_URL環境変数から接続情報を読み込む
-  url: <%= ENV["DATABASE_URL"] %>
