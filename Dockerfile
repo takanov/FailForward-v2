@@ -1,124 +1,66 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t fail_forward_v2 .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name fail_forward_v2 fail_forward_v2
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
+# --- common base (runtime) ---
 ARG RUBY_VERSION=3.3.0
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
-# Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# minimal runtime deps (必要に応じて libpq5 を追加)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    apt-get install --no-install-recommends -y \
+      curl libjemalloc2 libvips sqlite3 \
+      libpq5 \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Set production environment
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_WITHOUT="development:test"
 
-# Throw-away build stage to reduce size of final image
+# --- build stage ---
 FROM base AS build
 
-# Install packages needed to build gems
+# build-time deps（ネイティブ拡張に必要なものを追加）
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    apt-get install --no-install-recommends -y \
+      build-essential git libyaml-dev pkg-config \
+      libpq-dev libsqlite3-dev libssl-dev zlib1g-dev \
+      libxml2-dev libxslt1-dev imagemagick \
+    && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# 例: ruby:3.3 or ruby:3.3-slim
-FROM ruby:3.3
-
-ENV RAILS_ENV=production \
-    BUNDLE_WITHOUT="development:test" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_FROZEN="1" \
-    BUNDLE_PATH="/usr/local/bundle"
-
-WORKDIR /app
-
-# ✅ ネイティブ拡張に必要な OS パッケージ（よく使う gem を網羅）
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential git curl pkg-config \
-  libpq-dev      \ # ← pg 用（Railway は Postgres が多い）
-  libsqlite3-dev \ # ← sqlite3 を使うなら
-  libssl-dev     \ # ← OpenSSL 依存（faraday, puma 周辺で必要になることあり）
-  zlib1g-dev     \ # ← zlib（rubygems, nokogiri など）
-  libxml2-dev libxslt1-dev \ # ← nokogiri がいるなら鉄板
-  libvips       \ # ← image_processing(vips) を使うなら
-  imagemagick   \ # ← mini_magick を使うなら
-  && rm -rf /var/lib/apt/lists/*
-
-# 依存レイヤ
+# lock に合わせて Bundler をピン止め
+# （Gemfile.lock の末尾 "BUNDLED WITH" のバージョンを抽出）
+ENV BUNDLE_FORCE_RUBY_PLATFORM=1
 COPY Gemfile Gemfile.lock ./
-
-# ✅ bundler バージョンを lock に合わせてピン（差異で落ちがち）
-# Gemfile.lock の末尾 "BUNDLED WITH" を見て 2.x.y を指定
 RUN gem install bundler -v "$(awk '/^BUNDLED WITH$/{getline; gsub(/^ +/,""); print}' Gemfile.lock)"
 
-# ✅ （ARM/Alpine 跨ぎの揺れ対策）プリコンパイル済 gem を避けてビルドを強制
-#    msgpack/bootsnap などで役立つことが多い
-ENV BUNDLE_FORCE_RUBY_PLATFORM=1
-
+# 依存解決（詳細ログで失敗gemを可視化したい場合は --verbose を付ける）
 RUN bundle install --jobs 4 --retry 3
 
-# アプリ本体
+# アプリ本体をコピー
 COPY . .
 
-# キャッシュ掃除（任意）
+# （任意）bundlerキャッシュ掃除
 RUN rm -rf ~/.bundle "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
 
-# bootsnap は後からでもOK。まずは通す
+# bootsnap は一旦オフ。ビルドが安定後に下を有効化
 # RUN bundle exec bootsnap precompile --gemfile
 
-
-# 依存解決レイヤ
-COPY Gemfile Gemfile.lock ./
-
-# 1) bundler のバージョン/lock の整合性を可視化
-RUN ruby -v && bundler -v && \
-    awk '/^BUNDLED WITH$/{flag=1;next}/^[A-Z ]+$/{flag=0}flag' Gemfile.lock
-
-# 2) bundler 設定（本番想定）
-#    ※ Nixpacks でなく Dockerfile なので、ここで明示的に設定すると安定
-ENV BUNDLE_WITHOUT="development:test" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_FROZEN="1"
-
-# 3) bundle install を単独で実行（ここで落ちるかを確認）
-RUN bundle install --jobs 4 --retry 3
-
-# 4) bootsnap を分離（bundle が通ったあとに実行）
-RUN rm -rf ~/.bundle/ "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
-RUN bundle exec bootsnap precompile --gemfile
-
-
-
-
-# Final stage for app image
+# --- final image ---
 FROM base
 
-# Copy built artifacts: gems, application
+# gems とアプリを build から持ってくる
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-# Run and own only the runtime files as a non-root user for security
+# 非rootで実行
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
     chown -R rails:rails db log storage tmp
 USER 1000:1000
 
-# Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
-
-# Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
 CMD ["./bin/thrust", "./bin/rails", "server"]
