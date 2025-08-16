@@ -33,6 +33,52 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# 例: ruby:3.3 or ruby:3.3-slim
+FROM ruby:3.3
+
+ENV RAILS_ENV=production \
+    BUNDLE_WITHOUT="development:test" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_FROZEN="1" \
+    BUNDLE_PATH="/usr/local/bundle"
+
+WORKDIR /app
+
+# ✅ ネイティブ拡張に必要な OS パッケージ（よく使う gem を網羅）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential git curl pkg-config \
+  libpq-dev      \ # ← pg 用（Railway は Postgres が多い）
+  libsqlite3-dev \ # ← sqlite3 を使うなら
+  libssl-dev     \ # ← OpenSSL 依存（faraday, puma 周辺で必要になることあり）
+  zlib1g-dev     \ # ← zlib（rubygems, nokogiri など）
+  libxml2-dev libxslt1-dev \ # ← nokogiri がいるなら鉄板
+  libvips       \ # ← image_processing(vips) を使うなら
+  imagemagick   \ # ← mini_magick を使うなら
+  && rm -rf /var/lib/apt/lists/*
+
+# 依存レイヤ
+COPY Gemfile Gemfile.lock ./
+
+# ✅ bundler バージョンを lock に合わせてピン（差異で落ちがち）
+# Gemfile.lock の末尾 "BUNDLED WITH" を見て 2.x.y を指定
+RUN gem install bundler -v "$(awk '/^BUNDLED WITH$/{getline; gsub(/^ +/,""); print}' Gemfile.lock)"
+
+# ✅ （ARM/Alpine 跨ぎの揺れ対策）プリコンパイル済 gem を避けてビルドを強制
+#    msgpack/bootsnap などで役立つことが多い
+ENV BUNDLE_FORCE_RUBY_PLATFORM=1
+
+RUN bundle install --jobs 4 --retry 3
+
+# アプリ本体
+COPY . .
+
+# キャッシュ掃除（任意）
+RUN rm -rf ~/.bundle "$BUNDLE_PATH"/ruby/*/cache "$BUNDLE_PATH"/ruby/*/bundler/gems/*/.git
+
+# bootsnap は後からでもOK。まずは通す
+# RUN bundle exec bootsnap precompile --gemfile
+
+
 # 依存解決レイヤ
 COPY Gemfile Gemfile.lock ./
 
