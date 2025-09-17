@@ -1,0 +1,30 @@
+<h1>今日の失敗を投稿する</h1>
+
+<%= form_with(model: @failure, local: true) do |form| %>
+  <% if @failure.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@failure.errors.count, "error") %> prevented this failure from being saved:</h2>
+      <ul>
+      <% @failure.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= form.label :content, "今日の失敗" %>
+    <%= form.text_area :content %>
+  </div>
+
+  <div class="field">
+    <%= form.label :tags, "タグ（カンマ区切り）" %>
+    <%= form.text_field :tags %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "投稿する" %>
+  </div>
+<% end %>
+
+<%= link_to '戻る', failures_path %>

@@ -1,0 +1,12 @@
+<h1>失敗ログタイムライン</h1>
+
+<%= link_to '新しい失敗を投稿する', new_failure_path %>
+
+<% @failures.each do |failure| %>
+  <div>
+    <h3><%= failure.user.name %></h3>
+    <p><%= failure.content %></p>
+    <small><%= failure.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+  </div>
+  <hr>
+<% end %>
