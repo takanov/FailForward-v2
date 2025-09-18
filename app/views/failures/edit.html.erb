@@ -1,0 +1,17 @@
+<h1>投稿を編集する</h1>
+
+<%= form_with(model: @failure, local: true) do |form| %>
+  <div class="field">
+    <%= form.label :content, "失敗内容" %>
+    <%= form.text_area :content %>
+  </div>
+  
+  <div class="field">
+    <%= form.label :tags, "タグ" %>
+    <%= form.text_field :tags %>
+  </div>
+  
+  <div class="actions">
+    <%= form.submit "更新する" %>
+  </div>
+<% end %>

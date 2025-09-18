@@ -7,6 +7,7 @@
     <h3><%= failure.user.name %></h3>
     <p><%= failure.content %></p>
     <small><%= failure.created_at.strftime("%Y-%m-%d %H:%M") %></small>
+    <%= link_to '削除', @failure, method: :delete, data: { confirm: '本当に削除しますか？' } %>
   </div>
   <hr>
 <% end %>

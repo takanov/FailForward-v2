@@ -18,6 +18,24 @@ class FailuresController < ApplicationController
       render :new
     end
   end
+  def edit
+    @failure = Failure.find(params[:id])
+  end
+
+  def update
+    @failure = Failure.find(params[:id])
+    if @failure.update(failure_params)
+      redirect_to @failure, notice: '投稿が更新されました。'
+    else
+      render :edit
+    end
+  end
+
+  def destroy
+    @failure = Failure.find(params[:id])
+    @failure.destroy
+    redirect_to failures_path, notice: '投稿が削除されました。'
+  end
 
   def failure_params
     params.require(:failure).permit(:content, :tags)
