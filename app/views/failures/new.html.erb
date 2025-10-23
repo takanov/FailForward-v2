@@ -1,30 +1,70 @@
-<h1>今日の失敗を投稿する</h1>
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">
+          <i class="bi bi-plus-circle"></i>
+          新しい失敗を記録
+        </h3>
+      </div>
 
-<%= form_with(model: @failure, local: true) do |form| %>
-  <% if @failure.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@failure.errors.count, "error") %> prevented this failure from being saved:</h2>
-      <ul>
-      <% @failure.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-      </ul>
+      <div class="card-body">
+        <%= form_with(model: @failure, local: true) do |form| %>
+          <% if @failure.errors.any? %>
+            <div class="alert alert-danger">
+              <h4><%= pluralize(@failure.errors.count, "error") %> prohibited this failure from being saved:</h4>
+              <ul class="mb-0">
+                <% @failure.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="mb-3">
+            <%= form.label :content, "失敗内容", class: "form-label" %>
+            <%= form.text_area :content, class: "form-control", rows: 5, placeholder: "今日の失敗を記録しましょう...", required: true %>
+            <div class="form-text">具体的に何があったかを記録してください（最大500文字）</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :priority, "優先度", class: "form-label" %>
+            <%= form.select :priority,
+                Failure::PRIORITIES.map { |k, v| [v, k] },
+                {},
+                class: "form-select",
+                required: true %>
+            <div class="form-text">この失敗の重要度を選択してください</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :due_date, "改善期限", class: "form-label" %>
+            <%= form.datetime_local_field :due_date,
+                class: "form-control",
+                value: (@failure.due_date || 1.day.from_now).strftime("%Y-%m-%dT%H:%M"),
+                required: true %>
+            <div class="form-text">いつまでに改善するか設定してください</div>
+          </div>
+
+          <div class="mb-3">
+            <%= form.label :tags, "タグ", class: "form-label" %>
+            <%= form.text_field :tags,
+                class: "form-control",
+                placeholder: "プログラミング, 仕事, コミュニケーション" %>
+            <div class="form-text">カンマ区切りでタグを入力してください</div>
+          </div>
+
+          <div class="mb-3 form-check">
+            <%= form.check_box :resolved, class: "form-check-input" %>
+            <%= form.label :resolved, "すでに解決済み", class: "form-check-label" %>
+          </div>
+
+          <div class="d-grid gap-2">
+            <%= form.submit "失敗を記録する", class: "btn btn-primary btn-lg" %>
+            <%= link_to "キャンセル", failures_path, class: "btn btn-outline-secondary" %>
+          </div>
+        <% end %>
+      </div>
     </div>
-  <% end %>
-
-  <div class="field">
-    <%= form.label :content, "今日の失敗" %>
-    <%= form.text_area :content %>
   </div>
-
-  <div class="field">
-    <%= form.label :tags, "タグ（カンマ区切り）" %>
-    <%= form.text_field :tags %>
-  </div>
-
-  <div class="actions">
-    <%= form.submit "投稿する" %>
-  </div>
-<% end %>
-
-<%= link_to '戻る', failures_path %>
+</div>

@@ -8,3 +8,139 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+/* カスタムスタイル */
+
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ナビゲーションバーのカスタマイズ */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* カードのホバーエフェクト */
+.failure-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.failure-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 統計カードのスタイル */
+.card {
+  border-radius: 10px;
+}
+
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+}
+
+/* ボタングループのスタイル */
+.btn-group .btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-group .btn:hover {
+  transform: scale(1.05);
+}
+
+/* フォームのスタイル */
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* バッジのスタイル */
+.badge {
+  padding: 0.5em 0.75em;
+  font-size: 0.875rem;
+}
+
+/* アラートのスタイル */
+.alert {
+  border-radius: 10px;
+}
+
+/* カードフッターのボタングループ */
+.card-footer .btn-group {
+  gap: 0;
+}
+
+.card-footer .btn-group .btn {
+  font-size: 0.875rem;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 1.2rem;
+  }
+
+  .card-footer .btn-group {
+    flex-direction: column;
+  }
+
+  .card-footer .btn-group .btn {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.failure-card {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* カスタム背景色 */
+.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+.bg-success {
+  background-color: #198754 !important;
+}
+
+.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+/* リンクのスタイル */
+a {
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* シャドウのカスタマイズ */
+.shadow-sm {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.shadow {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}

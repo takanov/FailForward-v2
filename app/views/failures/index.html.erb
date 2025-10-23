@@ -1,13 +1,148 @@
-<h1>失敗ログタイムライン</h1>
-
-<%= link_to '新しい失敗を投稿する', new_failure_path %>
-
-<% @failures.each do |failure| %>
-  <div>
-    <h3><%= failure.user.name %></h3>
-    <p><%= failure.content %></p>
-    <small><%= failure.created_at.strftime("%Y-%m-%d %H:%M") %></small>
-    <%= link_to '削除', @failure, method: :delete, data: { confirm: '本当に削除しますか？' } %>
+<div class="row mb-4">
+  <div class="col-md-12">
+    <h1 class="mb-4">
+      <i class="bi bi-list-task"></i>
+      失敗管理
+    </h1>
   </div>
-  <hr>
+</div>
+
+<%# 統計カード %>
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <h5 class="card-title">総数</h5>
+        <h2><%= @stats[:total] %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <h5 class="card-title">進行中</h5>
+        <h2><%= @stats[:pending] %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <h5 class="card-title">完了</h5>
+        <h2><%= @stats[:completed] %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-danger text-white">
+      <div class="card-body">
+        <h5 class="card-title">期限切れ</h5>
+        <h2><%= @stats[:overdue] %></h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# 検索とフィルター %>
+<div class="row mb-4">
+  <div class="col-md-6">
+    <%= form_with(url: failures_path, method: :get, local: true, class: "d-flex") do |f| %>
+      <%= f.text_field :search, value: params[:search], placeholder: "失敗内容を検索...", class: "form-control me-2" %>
+      <%= f.submit "検索", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+
+  <div class="col-md-6 text-end">
+    <div class="btn-group" role="group">
+      <%= link_to "すべて", failures_path, class: "btn btn-outline-secondary #{'active' if params[:filter].nil?}" %>
+      <%= link_to "進行中", failures_path(filter: 'pending'), class: "btn btn-outline-warning #{'active' if params[:filter] == 'pending'}" %>
+      <%= link_to "完了", failures_path(filter: 'completed'), class: "btn btn-outline-success #{'active' if params[:filter] == 'completed'}" %>
+      <%= link_to "期限切れ", failures_path(filter: 'overdue'), class: "btn btn-outline-danger #{'active' if params[:filter] == 'overdue'}" %>
+    </div>
+  </div>
+</div>
+
+<%# ソートオプション %>
+<div class="row mb-3">
+  <div class="col-md-12">
+    <div class="btn-group btn-group-sm" role="group">
+      <label class="btn btn-outline-secondary">ソート:</label>
+      <%= link_to "作成日", failures_path(filter: params[:filter], search: params[:search]), class: "btn btn-outline-secondary #{'active' if params[:sort].nil?}" %>
+      <%= link_to "優先度", failures_path(filter: params[:filter], search: params[:search], sort: 'priority'), class: "btn btn-outline-secondary #{'active' if params[:sort] == 'priority'}" %>
+      <%= link_to "期限", failures_path(filter: params[:filter], search: params[:search], sort: 'due_date'), class: "btn btn-outline-secondary #{'active' if params[:sort] == 'due_date'}" %>
+    </div>
+  </div>
+</div>
+
+<%# 失敗リスト %>
+<% if @failures.any? %>
+  <div class="row">
+    <% @failures.each do |failure| %>
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm failure-card">
+          <div class="card-header bg-<%= failure.priority_class %>">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge bg-dark"><%= failure.priority_text %>優先度</span>
+              <span class="badge bg-secondary"><%= failure.status %></span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <h5 class="card-title">
+              <%= link_to failure.content.truncate(50), failure_path(failure), class: "text-decoration-none" %>
+            </h5>
+
+            <p class="card-text text-muted small">
+              <i class="bi bi-person"></i> <%= failure.user.name %><br>
+              <i class="bi bi-calendar"></i> 期限: <%= failure.due_date.strftime("%Y-%m-%d %H:%M") %><br>
+
+              <% if failure.overdue? %>
+                <span class="text-danger">
+                  <i class="bi bi-exclamation-triangle"></i> 期限切れ
+                </span>
+              <% elsif !failure.resolved? %>
+                <span class="text-info">
+                  <i class="bi bi-clock"></i> 残り <%= failure.days_remaining %>日
+                </span>
+              <% end %>
+            </p>
+
+            <% if failure.tags.present? %>
+              <div class="mb-2">
+                <% failure.tags.split(',').each do |tag| %>
+                  <span class="badge bg-light text-dark"><%= tag.strip %></span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="card-footer bg-transparent">
+            <div class="btn-group w-100" role="group">
+              <%= link_to failure_path(failure), class: "btn btn-sm btn-outline-primary" do %>
+                <i class="bi bi-eye"></i> 詳細
+              <% end %>
+
+              <%= link_to edit_failure_path(failure), class: "btn btn-sm btn-outline-secondary" do %>
+                <i class="bi bi-pencil"></i> 編集
+              <% end %>
+
+              <%= link_to complete_failure_path(failure), method: :patch, class: "btn btn-sm btn-outline-#{failure.resolved? ? 'warning' : 'success'}" do %>
+                <i class="bi bi-check-circle"></i> <%= failure.resolved? ? '未完了' : '完了' %>
+              <% end %>
+
+              <%= link_to failure_path(failure), method: :delete, data: { confirm: '本当に削除しますか？', turbo_method: :delete, turbo_confirm: '本当に削除しますか？' }, class: "btn btn-sm btn-outline-danger" do %>
+                <i class="bi bi-trash"></i> 削除
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="alert alert-info text-center">
+    <i class="bi bi-info-circle"></i>
+    失敗が見つかりませんでした。
+    <%= link_to "新しい失敗を記録する", new_failure_path, class: "alert-link" %>
+  </div>
 <% end %>

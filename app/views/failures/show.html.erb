@@ -1,2 +1,129 @@
-<h1>Failures#show</h1>
-<p>Find me in app/views/failures/show.html.erb</p>
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card shadow">
+      <div class="card-header bg-<%= @failure.priority_class %> text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="mb-0">
+            <i class="bi bi-file-text"></i>
+            失敗の詳細
+          </h3>
+          <div>
+            <span class="badge bg-dark"><%= @failure.priority_text %>優先度</span>
+            <span class="badge bg-light text-dark"><%= @failure.status %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="mb-4">
+          <h5 class="text-muted mb-2">失敗内容</h5>
+          <p class="lead"><%= @failure.content %></p>
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <h6 class="text-muted">
+                <i class="bi bi-person"></i> 記録者
+              </h6>
+              <p><%= @failure.user.name %></p>
+            </div>
+
+            <div class="mb-3">
+              <h6 class="text-muted">
+                <i class="bi bi-flag"></i> 優先度
+              </h6>
+              <p>
+                <span class="badge bg-<%= @failure.priority_class %>">
+                  <%= @failure.priority_text %>
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="mb-3">
+              <h6 class="text-muted">
+                <i class="bi bi-calendar"></i> 改善期限
+              </h6>
+              <p><%= @failure.due_date.strftime("%Y年%m月%d日 %H:%M") %></p>
+              <% if @failure.overdue? %>
+                <span class="badge bg-danger">
+                  <i class="bi bi-exclamation-triangle"></i> 期限切れ
+                </span>
+              <% elsif !@failure.resolved? %>
+                <span class="badge bg-info">
+                  <i class="bi bi-clock"></i> 残り <%= @failure.days_remaining %>日
+                </span>
+              <% end %>
+            </div>
+
+            <div class="mb-3">
+              <h6 class="text-muted">
+                <i class="bi bi-check-circle"></i> ステータス
+              </h6>
+              <p>
+                <% if @failure.resolved? %>
+                  <span class="badge bg-success">
+                    <i class="bi bi-check-circle-fill"></i> 解決済み
+                  </span>
+                <% else %>
+                  <span class="badge bg-warning">
+                    <i class="bi bi-hourglass-split"></i> 進行中
+                  </span>
+                <% end %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <% if @failure.tags.present? %>
+          <div class="mb-4">
+            <h6 class="text-muted">
+              <i class="bi bi-tags"></i> タグ
+            </h6>
+            <div>
+              <% @failure.tags.split(',').each do |tag| %>
+                <span class="badge bg-light text-dark me-1"><%= tag.strip %></span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="mb-4">
+          <h6 class="text-muted">
+            <i class="bi bi-clock-history"></i> タイムスタンプ
+          </h6>
+          <p class="small text-muted">
+            作成日時: <%= @failure.created_at.strftime("%Y年%m月%d日 %H:%M") %><br>
+            更新日時: <%= @failure.updated_at.strftime("%Y年%m月%d日 %H:%M") %>
+          </p>
+        </div>
+      </div>
+
+      <div class="card-footer bg-light">
+        <div class="d-flex justify-content-between">
+          <div>
+            <%= link_to failures_path, class: "btn btn-outline-secondary" do %>
+              <i class="bi bi-arrow-left"></i> 一覧に戻る
+            <% end %>
+          </div>
+
+          <div>
+            <%= link_to edit_failure_path(@failure), class: "btn btn-warning" do %>
+              <i class="bi bi-pencil"></i> 編集
+            <% end %>
+
+            <%= link_to complete_failure_path(@failure), method: :patch, class: "btn btn-#{@failure.resolved? ? 'warning' : 'success'}", data: { turbo_method: :patch } do %>
+              <i class="bi bi-check-circle"></i> <%= @failure.resolved? ? '未完了にする' : '完了にする' %>
+            <% end %>
+
+            <%= link_to failure_path(@failure), method: :delete, data: { confirm: '本当に削除しますか？', turbo_method: :delete, turbo_confirm: '本当に削除しますか？' }, class: "btn btn-danger" do %>
+              <i class="bi bi-trash"></i> 削除
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
