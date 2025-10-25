@@ -54,7 +54,7 @@ failure_contents = [
   { content: "データベースのバックアップを取らずに大規模な変更を実施した", tags: "データベース, リスク管理", priority: 1 },
   { content: "チームメンバーへの感謝の言葉を伝え忘れて、モチベーションを下げてしまった", tags: "チームワーク, コミュニケーション", priority: 3 },
   { content: "プロジェクトの見積もりを甘く設定して、納期に間に合わなかった", tags: "プロジェクト管理, 見積もり", priority: 2 },
-  { content: "重要な資料をバージョン管理せず、古いバージョンを使ってしまった", tags: "バージョン管理, ドキュメント", priority: 2 },
+  { content: "重要な資料をバージョン管理せず、古いバージョンを使ってしまった", tags: "バージョン管理, ドキュメント", priority: 2 }
 ]
 
 failures_created = 0
@@ -101,3 +101,4 @@ puts "期限切れ: #{Failure.overdue.count}"
 puts "\nログイン情報:"
 puts "  Email: yamada@example.com"
 puts "  Password: password123"
+
