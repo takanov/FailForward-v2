@@ -9,4 +9,3 @@ class AddPriorityAndDueDateToFailures < ActiveRecord::Migration[8.0]
     add_index :failures, :resolved
   end
 end
-

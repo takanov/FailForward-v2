@@ -101,4 +101,3 @@ puts "期限切れ: #{Failure.overdue.count}"
 puts "\nログイン情報:"
 puts "  Email: yamada@example.com"
 puts "  Password: password123"
-
