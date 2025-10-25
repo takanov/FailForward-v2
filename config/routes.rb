@@ -12,9 +12,9 @@ Rails.application.routes.draw do
   end
 
   # フィルター用のショートカットルート
-  get '/completed', to: 'failures#index', defaults: { filter: 'completed' }
-  get '/pending', to: 'failures#index', defaults: { filter: 'pending' }
-  get '/overdue', to: 'failures#index', defaults: { filter: 'overdue' }
+  get "/completed", to: "failures#index", defaults: { filter: "completed" }
+  get "/pending", to: "failures#index", defaults: { filter: "pending" }
+  get "/overdue", to: "failures#index", defaults: { filter: "overdue" }
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -3,14 +3,14 @@ class Failure < ApplicationRecord
 
   # バリデーション
   validates :content, presence: true, length: { maximum: 500 }
-  validates :priority, presence: true, inclusion: { in: [1, 2, 3] }
+  validates :priority, presence: true, inclusion: { in: [ 1, 2, 3 ] }
   validates :due_date, presence: true
 
   # 優先度の定数定義
   PRIORITIES = {
-    1 => '高',
-    2 => '中',
-    3 => '低'
+    1 => "高",
+    2 => "中",
+    3 => "低"
   }.freeze
 
   # スコープ
@@ -18,11 +18,11 @@ class Failure < ApplicationRecord
   scope :pending, -> { where(resolved: false) }
   scope :by_priority, -> { order(:priority) }
   scope :by_due_date, -> { order(:due_date) }
-  scope :overdue, -> { where('due_date < ? AND resolved = ?', Time.current, false) }
+  scope :overdue, -> { where("due_date < ? AND resolved = ?", Time.current, false) }
 
   # インスタンスメソッド
   def priority_text
-    PRIORITIES[priority] || '不明'
+    PRIORITIES[priority] || "不明"
   end
 
   def overdue?
@@ -31,11 +31,11 @@ class Failure < ApplicationRecord
 
   def status
     if resolved?
-      '完了'
+      "完了"
     elsif overdue?
-      '期限切れ'
+      "期限切れ"
     else
-      '進行中'
+      "進行中"
     end
   end
 
@@ -47,13 +47,13 @@ class Failure < ApplicationRecord
   def priority_class
     case priority
     when 1
-      'danger'
+      "danger"
     when 2
-      'warning'
+      "warning"
     when 3
-      'success'
+      "success"
     else
-      'secondary'
+      "secondary"
     end
   end
 end

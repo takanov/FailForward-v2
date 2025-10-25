@@ -1,6 +1,6 @@
 class FailuresController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_failure, only: [:show, :edit, :update, :destroy, :complete]
+  before_action :set_failure, only: [ :show, :edit, :update, :destroy, :complete ]
 
   def index
     @failures = Failure.all
@@ -12,19 +12,19 @@ class FailuresController < ApplicationController
 
     # フィルター機能
     case params[:filter]
-    when 'completed'
+    when "completed"
       @failures = @failures.completed
-    when 'pending'
+    when "pending"
       @failures = @failures.pending
-    when 'overdue'
+    when "overdue"
       @failures = @failures.overdue
     end
 
     # ソート機能
     case params[:sort]
-    when 'priority'
+    when "priority"
       @failures = @failures.by_priority
-    when 'due_date'
+    when "due_date"
       @failures = @failures.by_due_date
     else
       @failures = @failures.order(created_at: :desc)
@@ -51,7 +51,7 @@ class FailuresController < ApplicationController
   def create
     @failure = current_user.failures.build(failure_params)
     if @failure.save
-      redirect_to failures_path, notice: '投稿が完了しました。'
+      redirect_to failures_path, notice: "投稿が完了しました。"
     else
       render :new, status: :unprocessable_entity
     end
@@ -62,7 +62,7 @@ class FailuresController < ApplicationController
 
   def update
     if @failure.update(failure_params)
-      redirect_to @failure, notice: '投稿が更新されました。'
+      redirect_to @failure, notice: "投稿が更新されました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -70,12 +70,12 @@ class FailuresController < ApplicationController
 
   def destroy
     @failure.destroy
-    redirect_to failures_path, notice: '投稿が削除されました。'
+    redirect_to failures_path, notice: "投稿が削除されました。"
   end
 
   def complete
     @failure.update(resolved: !@failure.resolved)
-    redirect_to failures_path, notice: "投稿を#{@failure.resolved? ? '完了' : '未完了'}にしました。"
+    redirect_to failures_path, notice: "投稿を#{@failure.resolved? ? "完了" : "未完了"}にしました。"
   end
 
   private

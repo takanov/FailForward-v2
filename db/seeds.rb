@@ -65,17 +65,17 @@ failure_contents.each_with_index do |failure_data, index|
   # ランダムな期限を設定（過去、現在、未来）
   due_date = case index % 4
   when 0
-    2.days.ago  # 期限切れ
+    2.days.ago # 期限切れ
   when 1
-    2.days.from_now  # 近い将来
+    2.days.from_now # 近い将来
   when 2
-    7.days.from_now  # 1週間後
+    7.days.from_now # 1週間後
   else
-    14.days.from_now  # 2週間後
+    14.days.from_now # 2週間後
   end
 
   # ランダムに解決済みにする
-  resolved = [true, false, false, false].sample
+  resolved = [ true, false, false, false ].sample
 
   Failure.create!(
     user: user,
