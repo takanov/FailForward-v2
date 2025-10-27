@@ -41,7 +41,7 @@
             <%= form.label :due_date, "改善期限", class: "form-label" %>
             <%= form.datetime_local_field :due_date,
                 class: "form-control",
-                value: @failure.due_date.strftime("%Y-%m-%dT%H:%M"),
+                value: @failure.due_date&.strftime("%Y-%m-%dT%H:%M"),
                 required: true %>
             <div class="form-text">いつまでに改善するか設定してください</div>
           </div>

@@ -94,16 +94,20 @@
 
             <p class="card-text text-muted small">
               <i class="bi bi-person"></i> <%= failure.user.name %><br>
-              <i class="bi bi-calendar"></i> 期限: <%= failure.due_date.strftime("%Y-%m-%d %H:%M") %><br>
+              <% if failure.due_date.present? %>
+                <i class="bi bi-calendar"></i> 期限: <%= failure.due_date.strftime("%Y-%m-%d %H:%M") %><br>
 
-              <% if failure.overdue? %>
-                <span class="text-danger">
-                  <i class="bi bi-exclamation-triangle"></i> 期限切れ
-                </span>
-              <% elsif !failure.resolved? %>
-                <span class="text-info">
-                  <i class="bi bi-clock"></i> 残り <%= failure.days_remaining %>日
-                </span>
+                <% if failure.overdue? %>
+                  <span class="text-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 期限切れ
+                  </span>
+                <% elsif !failure.resolved? %>
+                  <span class="text-info">
+                    <i class="bi bi-clock"></i> 残り <%= failure.days_remaining %>日
+                  </span>
+                <% end %>
+              <% else %>
+                <i class="bi bi-calendar-x"></i> 期限: 未設定<br>
               <% end %>
             </p>
 

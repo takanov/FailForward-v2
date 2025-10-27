@@ -46,15 +46,19 @@
               <h6 class="text-muted">
                 <i class="bi bi-calendar"></i> 改善期限
               </h6>
-              <p><%= @failure.due_date.strftime("%Y年%m月%d日 %H:%M") %></p>
-              <% if @failure.overdue? %>
-                <span class="badge bg-danger">
-                  <i class="bi bi-exclamation-triangle"></i> 期限切れ
-                </span>
-              <% elsif !@failure.resolved? %>
-                <span class="badge bg-info">
-                  <i class="bi bi-clock"></i> 残り <%= @failure.days_remaining %>日
-                </span>
+              <% if @failure.due_date.present? %>
+                <p><%= @failure.due_date.strftime("%Y年%m月%d日 %H:%M") %></p>
+                <% if @failure.overdue? %>
+                  <span class="badge bg-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 期限切れ
+                  </span>
+                <% elsif !@failure.resolved? %>
+                  <span class="badge bg-info">
+                    <i class="bi bi-clock"></i> 残り <%= @failure.days_remaining %>日
+                  </span>
+                <% end %>
+              <% else %>
+                <p class="text-muted">未設定</p>
               <% end %>
             </div>
 
